@@ -8,4 +8,4 @@ tokenizers==0.13.2
 torch==1.12.1
 tqdm==4.62.3
 transformers==4.24.0
-wandb==0.13.10
+wandb==0.13.10:

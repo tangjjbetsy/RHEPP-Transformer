@@ -108,6 +108,49 @@ def align_p_and_s_tokens(ref_token, target_token):
         print("fail to align two sequences")
         raise ValueError 
 
+def scale_performance(p_path, o_path):
+    try:
+        input_p = PrettyMIDI(p_path)
+    except:
+        return
+    p_notes = []
+    notes = itertools.chain(*[
+            inst.notes for inst in input_p.instruments
+            if inst.program in range(128) and not inst.is_drum])
+    
+    p_notes += notes
+    p_notes.sort(key=lambda note: note.start)
+    
+    start_time_p = p_notes[0].start
+    
+    scale_ratios = np.linspace(-0.25, 0.25, 11) + 1
+    
+    # shift to the same start time to zero
+    for instrument in input_p.instruments:
+        for note in instrument.notes:
+            note.start -= start_time_p
+            note.end -= start_time_p
+
+        for control in instrument.control_changes:
+            control.time -= start_time_p
+    
+    if os.path.isdir(os.path.dirname(o_path)) == False:
+        os.makedirs(os.path.dirname(o_path))
+    
+    # scale and save
+    for ratio in scale_ratios:
+        input = copy.deepcopy(input_p)
+        for instrument in input.instruments:
+            for note in instrument.notes:
+                note.start *= ratio
+                note.end *= ratio
+            
+            for control in instrument.control_changes:
+                control.time *= ratio
+                
+        input.write(os.path.join(os.path.dirname(o_path), 
+                                os.path.basename(o_path).replace(".mid", "_" + str(ratio) + ".mid")))
+
 def create_dataset_for_s2p_ioi(csv_file=CSV_FILE):
     midi_csv = pd.read_csv(csv_file, header=0)
     tokenizer = init_tokenizer()
