@@ -8,6 +8,7 @@ from data_preprocessing import *
 from pretty_midi import PrettyMIDI
 
 import os
+import sys
 import copy
 import numpy as np
 import itertools
@@ -91,8 +92,9 @@ def get_args():
     parser.add_argument('--max_seq_len', type=int, default=MAX_LEN, help='all sequences are padded to `max_seq_len`')
     parser.add_argument('--ckpt_path', type=str, default=CKPT_PATH)
     parser.add_argument('--input_file', type=str, default=None)
-    parser.add_argument('--ouput_file', type=str, default=None)
+    parser.add_argument('--output_file', type=str, default=None)
     parser.add_argument('--performer', type=int, default=0)
+    parser.add_argument('--hs', type=int, default=128)
     ### cuda ###
     parser.add_argument("--cuda_devices", nargs='+', default=["0","1"], help="CUDA device ids")
     args = parser.parse_args()
@@ -117,8 +119,8 @@ if __name__ == "__main__":
     mymodel = MidiBertLM(bertmodel)
     model = MyLightningModule(mymodel)
     
+    sys.path.append(args.ckpt_path)
     checkpoint = torch.load(args.ckpt_path)
-    model.load_state_dict(checkpoint["state_dict"])
+    model.load_state_dict(checkpoint)
     
     generate(model, args.input_file, args.performer, args.output_file)
-    
